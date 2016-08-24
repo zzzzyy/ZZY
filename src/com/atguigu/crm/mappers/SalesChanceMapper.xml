@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mappers.SalesChanceMapper">
+	
+	<update id="doDatail">
+	update sales_chances set status='2',designee_id=#{designee.id},designee_date=#{createDate} where id=#{id}
+	</update>
+	
+	
+	
+	<insert id="inputContacts">
+		insert into contacts(id,name,tel,customer_id)
+		VALUES(crm_seq.nextval,#{salesChance.contact},#{salesChance.contactTel},#{salesChance.id})
+	</insert>	
+	
+	
+	
+	<insert id="inputCustomers">
+		<selectKey order="BEFORE" keyProperty="id" resultType="long">
+			SELECT crm_seq.nextval
+			FROM dual
+		</selectKey>
+		insert into customers(id,name,no,state)
+		VALUES(#{id},#{custName},#{description},'正常')
+	</insert>
+	
+	
+	
+	<update id="finish">
+		UPDATE sales_chances SET status = 3
+		WHERE id = #{id}
+	</update>
+	
+	
+	<update id="stop">
+		UPDATE sales_chances SET status = 4
+		WHERE id = #{id}
+	</update>
+	
+	
+	<update id="update">
+		UPDATE sales_chances SET cust_name = #{custName},title = #{title},contact = #{contact},description = #{description},source = #{source},rate = #{rate},contact_tel = #{contactTel}
+		WHERE id = #{id}
+	</update>
+	
+	<select id="get" resultType="com.atguigu.crm.entity.SalesChance">
+		SELECT s.id,cust_name,title,contact,s.description,source,rate,contact_tel,create_date,u.name AS "createBy.name", r.name AS "createBy.role.name"
+		FROM sales_chances s
+		LEFT OUTER JOIN users u
+		ON s.created_user_id = u.id
+		LEFT OUTER JOIN roles r
+		ON u.role_id = r.id
+		WHERE s.id = #{id}
+	</select>
+	
+	<delete id="delete">
+		DELETE FROM sales_chances WHERE id = #{id}
+	</delete>
+	
+	<insert id="save">
+		INSERT INTO sales_chances(id,cust_name,title,contact,description,created_user_id,source,rate,contact_tel,create_date,status)
+		VALUES(crm_seq.nextval,#{custName},#{title},#{contact},#{description},#{createBy.id},#{source},#{rate},#{contactTel},#{createDate},1)
+	</insert>
+	
+	<!--  
+		1.MySQL 分页用 LIMIT. 而 Oracle 分页用 rownum.
+		rownum 是 Oracle 数据库为数据表生成的一个伪列. 可以用来标记行号.
+		注意: rownum 不支持 > 或 >= . 只支持 < 或 <=
+		所以需要使用子查询。 
+		SELECT *
+		FROM(
+			SELECT rownum rn, id, cust_name, title, contact, contact_tel, create_date
+			FROM sales_chances
+		)
+		WHERE rn > 3 AND rn < 6;
+		
+		2. 对于分页索引需要使用半闭半开区间的方式. 
+		3. 对于 > 或 < 等符号需要放在 CDATA 块中
+		4. 对于标准的列名和 bean 的属性名之间可以进行自动的映射, 不过需要在 mybatis 配置文件中加入如下的配置:
+		例如: last_name 和 lastName. 
+	-->
+	<select id="getContent" resultType="com.atguigu.crm.entity.SalesChance">
+		<!-- 编号  客户名称  概要  联系人  联系人电话  创建时间   -->
+		SELECT *
+		FROM(
+			SELECT rownum rn, id, cust_name, title, contact, contact_tel, create_date
+			FROM sales_chances
+			WHERE status = 1 AND created_user_id = #{createBy.id}
+			ORDER BY id DESC
+		)
+		<![CDATA[
+		WHERE rn >= #{firstIndex} AND rn < #{endIndex}
+		]]>
+	</select>
+	
+	<select id="getTotalElements" resultType="long">
+		SELECT count(id)
+		FROM sales_chances
+		WHERE status = 1 AND created_user_id = #{createBy.id}
+	</select>
+	<select id="getUsers" resultType="com.atguigu.crm.entity.User">
+		SELECT id,name
+		FROM users
+	</select>
+	
+</mapper>

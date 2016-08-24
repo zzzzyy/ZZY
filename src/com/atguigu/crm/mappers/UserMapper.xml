@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mappers.UserMapper">
+<update id="update">
+update users set name=#{name},enabled=#{enabled},password=#{password},salt=#{salt},role_id=#{role.id}
+WHERE id = #{id}
+</update>
+
+	<resultMap type="com.atguigu.crm.entity.User" id="UserMap">
+		<id property="id" column="u_id" />
+		<result property="name" column="u_name" />
+		<result property="enabled" column="u_enabled" />
+		<result property="password" column="password" />
+		<result property="salt" column="salt" />
+
+		<association property="role" javaType="com.atguigu.crm.entity.Role">
+			<result property="id" column="r_id" />
+			<result property="name" column="r_name" />
+		</association>
+	</resultMap>
+
+
+	<select id="get" resultMap="UserMap" parameterType="com.atguigu.crm.entity.User">
+
+		select rownum rn, u.id as u_id,u.enabled as
+		u_enabled,u.name as u_name,
+		u.password,u.role_id,u.salt,r.id as
+		r_id,r.name as r_name
+		from users u
+		left outer join
+		roles r
+		on
+		u.role_id=r.id
+		WHERE u.id=#{id}
+		
+	</select>
+
+
+
+
+
+
+
+	<delete id="delete">
+		DELETE FROM users WHERE id = #{id}
+	</delete>
+	<insert id="save">
+		INSERT INTO
+		users(id,enabled,name,password,role_id)
+		VALUES(crm_seq.nextval,#{enabled},#{name},#{password},#{role.id})
+	</insert>
+
+
+	<select id="getroleList" resultType="com.atguigu.crm.entity.Role">select * from roles</select>
+
+
+	<select id="getContent" resultType="com.atguigu.crm.entity.User">
+		SELECT *
+		FROM(
+		SELECT rownum rn, id ,enabled ,name,
+		password,role_id,salt
+		FROM users
+		ORDER BY id DESC
+		)
+		<![CDATA[
+		WHERE rn >= #{firstIndex} AND rn < #{endIndex}
+		]]>
+	</select>
+	<select id="getTotalElements" resultType="long">
+		SELECT count(id) FROM
+		users
+	</select>
+
+
+	<select id="getByName" resultType="com.atguigu.crm.entity.User">
+		SELECT u.id, u.name, password,
+		u.enabled, r.name AS "role.name"
+		FROM users u
+		LEFT OUTER JOIN roles r
+		ON
+		u.role_id = r.id
+		WHERE u.name = #{name}
+	</select>
+
+</mapper>

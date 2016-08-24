@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mappers.SalesPlanMapper">
+	<update id="execUpdatePlan">
+		UPDATE sales_plan SET plan_result=#{salesPlan.result}
+		 WHERE id=#{salesPlan.id}
+	</update>
+
+	<select id="getdelete" resultType="int">
+		select count(id) FROM sales_plan where id=#{id}
+	</select>
+
+
+	<delete id="delete">
+		DELETE FROM sales_plan WHERE id = #{id}
+	</delete>
+	<update id="update">
+		UPDATE sales_plan SET todo=#{salesPlan.todo}
+		,chance_id=#{salesPlan.chance.id} WHERE id=#{salesPlan.id}
+	</update>
+	<insert id="savePlan">
+		<selectKey order="BEFORE" keyProperty="id" resultType="long">
+			SELECT crm_seq.nextval
+			FROM dual
+		</selectKey>
+
+		INSERT INTO sales_plan(id, todo, plan_date, chance_id)
+		VALUES(#{id},#{todo}, #{date}, #{chance.id})
+	</insert>
+
+	<resultMap type="com.atguigu.crm.entity.SalesChance" id="chanceMap">
+		<id column="id" property="id" />
+		<result column="source" property="source" />
+		<result column="cust_name" property="custName" />
+
+		<result column="rate" property="rate" />
+		<result column="title" property="title" />
+		<result column="contact" property="contact" />
+
+		<result column="contact_tel" property="contactTel" />
+		<result column="description" property="description" />
+		<result column="create_date" property="createDate" />
+
+		<result column="createBy.name" property="createBy.name" />
+
+		<result column="designee.name" property="designee.name" />
+
+		<collection property="salesPlans" javaType="com.atguigu.crm.entity.SalesPlan">
+			<id column="p_id" property="id" />
+			<result column="todo" property="todo" />
+			<result column="plan_result" property="result" />
+			<result column="plan_date" property="date" />
+		</collection>
+	</resultMap>
+
+	<select id="get" resultMap="chanceMap">
+		SELECT
+		s.id, source, cust_name, rate,
+		title,contact, contact_tel, description,
+		create_date,
+		c.name AS
+		"createBy.name",
+		d.name AS "designee.name",
+		p.id AS "p_id", todo,
+		plan_result, plan_date
+		FROM sales_chances s
+		LEFT OUTER JOIN users c
+		ON
+		s.created_user_id = c.id
+		LEFT OUTER JOIN users d
+		ON s.designee_id = d.id
+		LEFT OUTER JOIN
+		sales_plan p
+		ON p.chance_id = s.id
+		WHERE s.id = #{id}
+	</select>
+
+
+	<select id="getContent" resultType="com.atguigu.crm.entity.SalesChance">
+		<![CDATA[
+		SELECT *
+		FROM(
+			SELECT rownum rn, id, cust_name, title, contact, contact_tel, create_date,status
+			FROM sales_chances
+			WHERE status > 1 AND designee_id = #{createBy.id}
+			ORDER BY id DESC
+		)
+		
+		WHERE rn >= #{firstIndex} AND rn < #{endIndex}
+		]]>
+	</select>
+
+
+	<select id="getTotalElements" resultType="long">
+	<![CDATA[	SELECT count(id)
+		FROM sales_chances
+		WHERE status > 1 AND designee_id = #{user.id}]]>
+	</select>
+
+</mapper>

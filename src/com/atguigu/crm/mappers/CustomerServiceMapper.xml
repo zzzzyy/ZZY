@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mappers.CustomerServiceMapper">
+
+<update id="feedbackSave">
+update customer_services set deal_result=#{dealResult},
+satisfy=#{satisfy},service_state='已归档'
+where id=#{id}
+</update>
+<update id="dealsave">
+update customer_services set deal_date=#{dealDate},
+service_state='已处理',service_deal=#{serviceDeal}
+where id=#{id}
+</update>
+
+<select id="getarr" resultType="com.atguigu.crm.entity.CustomerService">
+	SELECT	m.id,allot_date ,create_date,deal_date,deal_result,satisfy,service_deal,
+	service_request,service_state,service_title,service_type,
+	allot_id as "allotTo.id",created_id as "createdby.id",customer_id as "customer.id",
+	a.name as "allotTo.name",c.name as "createdby.name",s.name as "customer.name"
+	from customer_services m
+	LEFT OUTER JOIN users a
+	on allot_id=a.id
+	LEFT OUTER JOIN users c
+	on created_id=c.id
+	LEFT OUTER JOIN customers s
+	on customer_id=s.id
+	where m.id=#{id}
+</select>
+
+
+<delete id="delete">
+delete from customer_services where id=#{id}
+</delete>
+
+<update id="allotsave">
+update customer_services set allot_id=#{allotTo.id},allot_date=#{allotDate},service_state='已分配' where id=#{id}
+</update>
+
+<select id="getUsers" resultType="com.atguigu.crm.entity.User">
+select * from users 
+</select>
+<select id="getContent" resultType="com.atguigu.crm.entity.CustomerService">
+		SELECT *
+		FROM(
+		SELECT rownum rn, cus.id,create_date,
+		service_request,service_state,service_title,
+		service_type,con.name as "customer.name",con.id as "customer.id",use.name as "createdby.name",use.id as "createdby.id"
+		FROM customer_services cus 
+		LEFT OUTER JOIN customers con 
+		on customer_id=con.id
+		LEFT OUTER JOIN users use
+		on created_id=use.id	
+		<include refid="queryCondition" />
+		ORDER BY rn DESC
+		)
+		<![CDATA[
+		WHERE rn >= #{firstIndex} AND rn < #{endIndex}
+		]]>
+
+</select>
+<select id="getTotalElements2" resultType="Long">
+SELECT count(cus.id)
+		FROM customer_services cus
+		LEFT OUTER JOIN customers con
+		on customer_id=con.id
+		<include refid="queryCondition"/>
+</select>
+
+
+	<sql id="queryCondition">
+		<if test="sign==1">
+		where service_state='新创建'
+		</if>
+		<if test="sign==2">
+		where service_state='已分配' and allot_id=#{createBy.id} 
+		</if>
+		<if test="sign==3">
+		where service_state='已处理' 
+		</if>
+		<if test="sign==4">
+		where service_state='已归档' 
+		</if>
+		<if test="serviceType != null">
+			AND  service_type LIKE #{serviceType}
+		</if>
+		<if test="serviceTitle != null">
+			AND service_title LIKE #{serviceTitle}
+		</if>
+		<if test="customerName != null">
+			 AND con.name LIKE #{customerName} 
+		</if>
+		<if test="createDateq != null">
+			<![CDATA[AND  create_date> to_date(#{createDateq},'yyyy-mm-dd')  ]]> 
+		</if>
+		<if test="createDateh != null">
+			<![CDATA[AND create_date < to_date(#{createDateq},'yyyy-mm-dd') ]]> 
+		</if>
+	</sql>
+
+
+	<insert id="createSave">
+		insert into customer_services
+		(id,create_date,service_request,service_title,
+		service_type,created_id,customer_id,service_state)
+		values(crm_seq.nextval,#{createDate},#{serviceRequest},
+		#{serviceTitle},#{serviceType},
+		#{createdby.id},#{customer.id},#{serviceState})
+	</insert>
+
+	<select id="getCustomer" resultType="com.atguigu.crm.entity.Customer">
+		select id,name from customers
+	</select>
+
+</mapper>

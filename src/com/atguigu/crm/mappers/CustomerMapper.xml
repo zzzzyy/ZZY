@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mappers.CustomerMapper">
+
+	<update id="deleteajx">
+		update customers set state='删除' where id=#{id}
+	</update>
+	
+	<update id="update">
+		update customers set
+		address=#{address},bank=#{bank},bank_account=#{bankAccount},bankroll=#{bankroll},chief=#{chief},credit=#{credit},
+		fax=#{fax},licence_no=#{licenceNo},local_tax_no=#{localTaxNo},name=#{name},national_tax_no=#{nationalTaxNo},region=#{region},
+		satify=#{satify},state=#{state},tel=#{tel},turnover=#{turnover},websit=#{websit},zip=#{zip},manager_id=#{manager.id}
+		,customer_level=#{level}
+		where id=#{id}
+
+	</update>
+	
+	<select id="customerMapper" resultType="com.atguigu.crm.entity.Contact">
+		select * from contacts
+		where customer_id=#{id}
+	</select>
+	
+	<select id="getCustomer" resultType="com.atguigu.crm.entity.Customer">
+		select
+		id,address,bank,bank_account,bankroll,chief,credit,
+		fax,licence_no,local_tax_no,name,national_tax_no,no,region,
+		satify,state,tel,turnover,websit,zip,manager_id as
+		"manager.id",customer_level as "level"
+		from customers where id=#{id}
+	</select>
+	
+	<select id="credits" resultType="com.atguigu.crm.entity.Dict">
+		select * from dicts where
+		type='信用度'
+	</select>
+	
+	<select id="gatIsfies" resultType="com.atguigu.crm.entity.Dict">
+		select * from dicts where
+		type='满意度'
+	</select>
+	
+	<select id="levels" resultType="com.atguigu.crm.entity.Dict">
+		select * from dicts where
+		type='客户等级'
+	</select>
+
+	<select id="regions" resultType="com.atguigu.crm.entity.Dict">
+		select * from dicts where
+		type='地区'
+	</select>
+
+	<select id="getContent" resultType="com.atguigu.crm.entity.Customer">
+		<!-- 编号 客户名称 概要 联系人 联系人电话 创建时间 -->
+		SELECT *
+		FROM(
+		SELECT rownum rn, cus.id , cus.no,cus.name , cus.region ,
+		cus.customer_level
+		as "level", cus.state, con.name as "manager.name"
+		FROM customers cus LEFT OUTER JOIN contacts con on
+		cus.manager_id=con.id
+		where 1=1
+		<include refid="queryCondition" />
+		ORDER BY rn DESC
+		)
+		<![CDATA[
+		WHERE rn >= #{firstIndex} AND rn < #{endIndex}
+		]]>
+	</select>
+
+	<select id="getTotalElements2" resultType="long">
+		SELECT count(cus.id)
+		FROM customers cus
+		LEFT OUTER JOIN contacts con
+		on
+		cus.manager_id=con.id
+		where 1=1
+		<include refid="queryCondition" />
+	</select>
+
+	<sql id="queryCondition">
+		<if test="name != null">
+			AND cus.name LIKE #{name}
+		</if>
+		<if test="region != null">
+			AND cus.region LIKE #{region}
+		</if>
+		<if test="managerName != null">
+			AND con.name LIKE #{managerName}
+		</if>
+		<if test="level != null">
+			AND cus.customer_level LIKE #{level}
+		</if>
+		<if test="state != null">
+			AND cus.state LIKE #{state}
+		</if>
+	</sql>
+
+</mapper>

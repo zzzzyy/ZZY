@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mappers.OrderMapper">
+
+	<select id="getOrder" resultType="com.atguigu.crm.entity.Order">
+	 SELECT a.id,a.no,a.address,a.status,
+    a.order_date as "date",a.customer_id as "customer.id"
+    FROM orders a
+    where a.id=#{id}
+	</select>
+	<select id="getitems" resultType="com.atguigu.crm.entity.OrderItem">
+		select i.id,i.item_count as
+		"count",i.money,o.address as "order.name",o.id as "order.id",p.name as
+		"product.name",p.id as "product.id",p.unit as "product.unit"
+		from order_items i
+		LEFT OUTER JOIN orders o
+		on order_id=o.id
+		LEFT OUTER JOIN products p
+		on product_id=p.id
+		where order_id=#{id}
+	</select>
+
+
+
+
+	<select id="getContent" resultType="com.atguigu.crm.entity.Order">
+		<!-- 编号 客户名称 概要 联系人 联系人电话 创建时间 -->
+		SELECT *
+		FROM(
+		SELECT rownum rn, a.id,a.no,a.address,a.status,
+		a.order_date as "date",a.customer_id as "customer.id",s.cust_name as
+		"customer.name"
+		FROM orders a
+		LEFT OUTER JOIN sales_chances s
+		on
+		a.customer_id=s.id
+		where a.customer_id=#{chanceid}
+		ORDER BY rn DESC
+		)
+		<![CDATA[
+		WHERE rn >= #{firstIndex} AND rn < #{endIndex}
+		]]>
+	</select>
+
+	<select id="getTotalElements" resultType="long">
+		select count(*) from orders where customer_id=#{id}
+	</select>
+</mapper>

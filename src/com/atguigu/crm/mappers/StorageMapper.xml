@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mappers.StorageMapper">
+<update id="update">
+update storages set memo=#{memo},stock_count=#{stockCount},stock_ware=#{stockWare},ware_house=#{wareHouse},product_id=#{product.id}
+WHERE id = #{id}
+</update>
+
+<!-- <resultMap type="com.atguigu.crm.entity.Storage" id="StorageMap1">
+		<id property="id" column="s_id" />
+		<result property="memo" column="memo" />
+		<result property="stockCount" column="stock_count" />
+		<result property="stockWare" column="stock_ware" />
+		<result property="wareHouse" column="ware_house" />
+
+
+		<association property="product" javaType="com.atguigu.crm.entity.Product">
+			<result property="id" column="p_id" />
+			<result property="name" column="name" />
+		</association>
+	</resultMap> -->
+
+	<select id="get" resultType="com.atguigu.crm.entity.Storage">
+		select  s.id, s.memo,s.stock_count,
+		s.stock_ware,s.ware_house ,p.name as "product.name",p.id as "product.id"
+		from storages s
+		left outer join
+		products p
+		on s.product_id=p.id
+		where s.id = #{id}
+	</select>
+	<delete id="delete">
+		DELETE FROM storages WHERE id = #{id}
+	</delete>
+
+	<insert id="save">
+		INSERT INTO
+		storages(id,memo,stock_count,stock_ware,ware_house,product_id)
+		VALUES(crm_seq.nextval,#{memo},#{stockCount},#{stockWare},#{wareHouse},#{product.id})
+	</insert>
+
+
+	<select id="getProductList" resultType="com.atguigu.crm.entity.Product">
+		select * from products
+	</select>
+
+
+<!-- 	<resultMap type="com.atguigu.crm.entity.Storage" id="StorageMap">
+		<id property="id" column="id" />
+		<result property="memo" column="memo" />
+		<result property="stockCount" column="stock_count" />
+		<result property="stockWare" column="stock_ware" />
+		<result property="wareHouse" column="ware_house" />
+
+
+		<association property="product" javaType="com.atguigu.crm.entity.Product">
+			
+			<result property="name" column="name" />
+		</association>
+	</resultMap> -->
+	<select id="getContent" resultType="com.atguigu.crm.entity.Storage">
+		SELECT *
+		FROM(
+		select rownum rn, s.id, s.memo,s.stock_count,
+		s.stock_ware,s.ware_house ,p.name as "product.name"
+		from storages s
+		left outer join
+		products p
+		on s.product_id=p.id
+		ORDER BY rn
+		)
+		<![CDATA[
+		WHERE rn >= #{firstIndex} AND rn < #{endIndex}
+		]]>
+	</select>
+
+	<select id="getTotalElements" resultType="long">
+		SELECT count(id) FROM
+		storages
+	</select>
+
+
+</mapper>

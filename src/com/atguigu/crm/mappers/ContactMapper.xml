@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mappers.ContactMapper">
+<update id="customerid">
+update customers set manager_id=null where id=#{customerid} and manager_id=#{contactId}
+</update>
+
+<delete id="delete">
+DELETE FROM contacts WHERE id = #{id}
+</delete>
+
+<select id="getContact" resultType="com.atguigu.crm.entity.Contact">
+select con.id,con.mobile , con.memo , con.name,
+ con.sex,con.tel,con.position,con.customer_id as "customer.id",cus.name as "customer.name"
+ from contacts con
+ LEFT OUTER JOIN customers cus
+ on con.customer_id=cus.id
+ where con.id=#{contactId}
+</select>
+
+<update id="update">
+update contacts set mobile=#{mobile},memo=#{memo},
+name=#{name},sex=#{sex},tel=#{tel},position=#{position},customer_id=#{customer.id}
+where id=#{id}
+</update>
+<insert id="save">
+		insert into contacts(id,mobile , memo , name, sex,tel,position,customer_id)
+		values(crm_seq.nextval,#{mobile},#{memo},#{name},#{sex},#{tel},#{position},#{customer.id})
+</insert>
+
+</mapper>
